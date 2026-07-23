@@ -20,7 +20,7 @@ import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Plane } from "@babylonjs/core/Maths/math.plane";
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
-import { ProjectPointOnPlane, ProjectPointOnPlaneToRef, Barycentric, ProjectPointOnSegmentToRef, AngleFromToAround, DistancePointSegment, RotateInPlace, ProjectPointOnPathToRef } from "./babylonjs-tiaratumgames-tools";
+import { ProjectPointOnPlane, ProjectPointOnPlaneToRef, Barycentric, ProjectPointOnSegmentToRef, AngleFromToAround, DistancePointSegment, RotateInPlace, ProjectPointOnPathToRef, ProjectPointOnSegment } from "./babylonjs-tiaratumgames-tools";
 import { PlaneCollider } from "./Collider";
 import { MinMax } from "./Number";
 
@@ -60,6 +60,7 @@ export interface IIntersection {
     normal: Vector3 | undefined;
     depth: number;
     index?: number; // when intersecting with a path
+    localPoint?: Vector3; // when intersecting with a path
 }
 
 export class Intersection implements IIntersection {
@@ -392,6 +393,95 @@ export function SphereLatheIntersection(cSphere: Vector3, rSphere: number, cLath
     }
 
     return intersection;
+}
+
+var SphereExtrudeIntersectionTmpWireProj_0 = { point: Vector3.Zero(), index: - 1, fraction: 0 };
+var SphereExtrudeIntersectionTmpVec3 = Vector3.Zero();
+var SphereExtrudeIntersectionTmpMatrix = Matrix.Identity();
+export function SphereExtrudeIntersections(
+    cSphere: Vector3,
+    rSphere: number,
+    extrudePath: Vector3[],
+    extrudeNormals: Vector3[],
+    shape: Vector3[],
+    pathIsEvenlyDistributed?: boolean,
+    nearBestIndex?: number,
+    nearBestSearchRange?: number,
+    excludePos?: Vector3,
+    excludeRange_m?: number
+): IIntersection[] {
+    let pathProj = SphereExtrudeIntersectionTmpWireProj_0;
+    ProjectPointOnPathToRef(cSphere, extrudePath, pathProj, pathIsEvenlyDistributed, nearBestIndex, nearBestSearchRange, excludePos, excludeRange_m);
+
+    if (pathProj.point) {
+
+    }
+    
+    if (pathProj.index >= 0 && pathProj.index < extrudePath.length) {
+        let prev = extrudePath[pathProj.index - 1];
+        let point = extrudePath[pathProj.index];
+        let next = extrudePath[pathProj.index + 1];
+        if (!prev) {
+            prev = point;
+        }
+        if (!next) {
+            next = point;
+        }
+        
+        let prevN = extrudeNormals[pathProj.index - 1];
+        let pointN = extrudeNormals[pathProj.index];
+        let nextN = extrudeNormals[pathProj.index + 1];
+        if (!prevN) {
+            prevN = pointN;
+        }
+        if (!nextN) {
+            nextN = pointN;
+        }
+
+        let zAxis = next.subtract(prev).normalize();
+        let yAxis = pointN;
+        //Vector3.SlerpToRef(prevN, nextN, frac, yAxis).normalize();
+        let xAxis = SphereExtrudeIntersectionTmpVec3;
+        Vector3.CrossToRef(yAxis, zAxis, xAxis);
+
+        let matrix = SphereExtrudeIntersectionTmpMatrix;
+        Matrix.FromXYZAxesToRef(xAxis, yAxis, zAxis, matrix);
+
+        let dP = cSphere.subtract(pathProj.point);
+        let localCSphere = new Vector3(Vector3.Dot(dP, xAxis), Vector3.Dot(dP, yAxis), Vector3.Dot(dP, zAxis));
+
+        let intersections: IIntersection[] = [];
+
+        for (let i = 0; i < shape.length - 1; i++) {
+            let s1 = shape[i];
+            let s2 = shape[i + 1];
+            let proj = ProjectPointOnSegment(localCSphere, s1, s2);
+            if (Vector3.DistanceSquared(localCSphere, proj) < rSphere * rSphere) {
+                let intersection = new Intersection();
+                intersection.hit = true;
+                intersection.point = proj;
+                intersection.normal = localCSphere.subtract(proj).normalize();
+                intersection.depth = rSphere - Vector3.Distance(localCSphere, proj);
+                intersections.push(intersection);
+            }
+        }
+
+        intersections.forEach(intersection => {
+            if (intersection && intersection.hit) {
+                intersection.localPoint = intersection.point?.clone();
+                if (intersection.normal) {
+                    Vector3.TransformNormalToRef(intersection.normal, matrix, intersection.normal);
+                }
+                if (intersection.point) {
+                    Vector3.TransformNormalToRef(intersection.point, matrix, intersection.point);
+                    intersection.point.addInPlace(pathProj.point);
+                }
+            }
+        });
+
+        return intersections;
+    }
+    return [];
 }
 
 var SphereWireIntersectionTmpWireProj_0 = { point: Vector3.Zero(), index: -1 };
