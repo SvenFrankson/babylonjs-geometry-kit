@@ -1130,7 +1130,6 @@ export function CreateSphereCut(name: string, props: ISphereCutProps, scene?: Sc
     return mesh;
 }
 
-/*
 export interface IWireProps {
     path: Vector3[];
     pathUps?: Vector3[];
@@ -1158,10 +1157,13 @@ export function CreateWireVertexData(props: IWireProps): VertexData {
     if (props.textureRatio === undefined) {
         props.textureRatio = 1;
     }
+    if (props.radius === undefined) {
+        props.radius = 0.1;
+    }
 
     let center = Vector3.Zero();
     let path = [...props.path];
-    let ups: Vector3[];
+    let ups: Vector3[] | undefined = undefined;
     if (props.pathUps) {
         ups = [...props.pathUps];
     }
@@ -1214,7 +1216,7 @@ export function CreateWireVertexData(props: IWireProps): VertexData {
     let cumulLength = 0;
     let t = props.tesselation;
     let angle = (2 * Math.PI) / t;
-    let lastRayon: Vector3;
+    let lastRayon: Vector3 | undefined = undefined;
     for (let i = 0; i < n; i++) {
         let p = path[i];
         if (i > 0) {
@@ -1300,9 +1302,9 @@ export function CreateWireVertexData(props: IWireProps): VertexData {
 
         for (let i = 0; i <= t; i++) {
             let idx = 3 * i;
-            let nx = normals[idx];
-            let ny = normals[idx + 1];
-            let nz = normals[idx + 2];
+            let nx: number = normals[idx];
+            let ny: number = normals[idx + 1];
+            let nz: number = normals[idx + 2];
             nx += dir.x;
             ny += dir.y;
             nz += dir.z;
@@ -1345,9 +1347,9 @@ export function CreateWireVertexData(props: IWireProps): VertexData {
 
         for (let i = 0; i <= t; i++) {
             let idx = 3 * (n - 1) * (t + 1) + 3 * i;
-            let nx = normals[idx];
-            let ny = normals[idx + 1];
-            let nz = normals[idx + 2];
+            let nx: number = normals[idx];
+            let ny: number = normals[idx + 1];
+            let nz: number = normals[idx + 2];
             nx += dir.x;
             ny += dir.y;
             nz += dir.z;
@@ -1371,6 +1373,7 @@ export function CreateWireVertexData(props: IWireProps): VertexData {
     return data;
 }
 
+/*
 export function CreateCubeSphereVertexData(diameter: number, color: Color3, alpha: number = 1): VertexData {
     let datas = new VertexData();
 
