@@ -297,6 +297,29 @@ export function EvaluatePath(f: number, path: Vector3[]): Vector3 {
     return v;
 }
 
+export function EvaluatePathTangentToRef(f: number, path: Vector3[], ref: Vector3): Vector3 {
+    if (f === 1) {
+        return path[path.length - 1].subtract(path[path.length - 2]).normalize();
+    }
+    let n = Math.floor(f * (path.length - 1));
+    let p = path[n];
+    let prev = path[n - 1] ? path[n - 1] : p;
+    let next = path[n + 1] ? path[n + 1] : p;
+    let nextNext = path[n + 2] ? path[n + 2] : next;
+    let ff = f * (path.length - 1) - n;
+    let dir0 = TmpVec3[1].copyFrom(next).subtractInPlace(prev).normalize();
+    let dir1 = TmpVec3[2].copyFrom(nextNext).subtractInPlace(p).normalize();
+    TmpVec3[0].copyFrom(dir0).scaleInPlace(1 - ff);
+    ref.copyFrom(dir1).scaleInPlace(ff).addInPlace(TmpVec3[0]);
+    return ref;
+}
+
+export function EvaluatePathTangent(f: number, path: Vector3[]): Vector3 {
+    let v = Vector3.Zero();
+    EvaluatePathTangentToRef(f, path, v);
+    return v;
+}
+
 export function CatmullRomPathInPlace(path: Vector3[], inDir?: Vector3, outDir?: Vector3): Vector3[] {
     if (path.length >= 2) {
         let pFirst = TmpVec3[0];
