@@ -1710,6 +1710,7 @@ export function CreateCubeDiscVertexData(diameter: number, color: Color3, alpha:
 
     return datas;
 }
+*/
 
 export interface ITrailProps {
     path: Vector3[];
@@ -1759,7 +1760,7 @@ export function CreateTrailVertexData(props: ITrailProps): VertexData {
         let dir = directions[i];
         let xDir = Vector3.Cross(up, dir).normalize();
         let normal = Vector3.Cross(dir, xDir).normalize();
-        let r = props.radius;
+        let r = props.radius ?? 0;
         if (props.radiusFunc) {
             r = props.radiusFunc(i / (n - 1));
         }
@@ -1801,4 +1802,3 @@ export function CreateTrailVertexData(props: ITrailProps): VertexData {
 
     return data;
 }
-*/

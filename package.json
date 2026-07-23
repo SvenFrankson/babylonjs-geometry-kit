@@ -1,6 +1,6 @@
 {
   "name": "babylonjs-tiaratumgames-tools",
-  "version": "0.1.6",
+  "version": "0.1.11",
   "type": "module",
   "main": "./dist/babylonjs-tiaratumgames-tools.umd.cjs",
   "module": "./dist/babylonjs-tiaratumgames-tools.js",
